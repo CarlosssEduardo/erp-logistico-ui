@@ -1,0 +1,52 @@
+@import "tailwindcss";
+
+/* ==========================================================================
+   SCROLLBAR PERSONALIZADA (DARK THEME)
+   ========================================================================== */
+
+/* Define a espessura da barra (Vertical e Horizontal) */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+/* Fundo do trilho da barra */
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #0B1120; 
+  border-radius: 8px;
+}
+
+/* A barra em si (Thumb) */
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #334155; 
+  border-radius: 8px;
+  border: 2px solid #0B1120; /* Cria um "respiro" em volta da barra */
+}
+
+/* A barra quando o mouse passa por cima */
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #475569; 
+}
+
+/* Suporte para Firefox */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #334155 #0B1120;
+}
+
+/* Aplica o mesmo estilo globalmente na página inteira (Opcional) */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #0B1120;
+}
+::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 8px;
+  border: 2px solid #0B1120;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+}
