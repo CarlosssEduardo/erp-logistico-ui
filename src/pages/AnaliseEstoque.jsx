@@ -137,7 +137,7 @@ export default function AnaliseEstoque() {
         {/* CARDS DE IMPACTO FINANCEIRO */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 shrink-0">
            
-           <div className={`bg-gradient-to-br from-[#0C1525] to-[#122238] border rounded-2xl p-6 relative overflow-hidden shadow-2xl flex items-center justify-between cursor-pointer transition-all ${visaoAtual === 'PARADO' ? 'border-rose-500 shadow-[0_0_20px_rgba(225,29,72,0.2)] ring-1 ring-rose-500/50' : 'border-[#1E293B] hover:border-slate-600'}`} onClick={() => setVisaoAtual('PARADO')}>
+           <div className={`bg-linear-to-br from-[#0C1525] to-[#122238] border rounded-2xl p-6 relative overflow-hidden shadow-2xl flex items-center justify-between cursor-pointer transition-all ${visaoAtual === 'PARADO' ? 'border-rose-500 shadow-[0_0_20px_rgba(225,29,72,0.2)] ring-1 ring-rose-500/50' : 'border-[#1E293B] hover:border-slate-600'}`} onClick={() => setVisaoAtual('PARADO')}>
              <div className="absolute left-0 top-0 bottom-0 w-2 bg-rose-500 shadow-[0_0_20px_rgba(225,29,72,1)]"></div>
              <div>
                <p className="text-xs font-black text-rose-500 uppercase tracking-widest mb-2 flex items-center gap-2"><PackageX size={16}/> Estoque 100% Parado (Dinheiro Morto)</p>
@@ -149,7 +149,7 @@ export default function AnaliseEstoque() {
              </div>
            </div>
 
-           <div className={`bg-gradient-to-br from-[#0C1525] to-[#122238] border rounded-2xl p-6 relative overflow-hidden shadow-2xl flex items-center justify-between cursor-pointer transition-all ${visaoAtual === 'BAIXO_GIRO' ? 'border-amber-500 shadow-[0_0_20px_rgba(245,158,11,0.2)] ring-1 ring-amber-500/50' : 'border-[#1E293B] hover:border-slate-600'}`} onClick={() => setVisaoAtual('BAIXO_GIRO')}>
+           <div className={`bg-linear-to-br from-[#0C1525] to-[#122238] border rounded-2xl p-6 relative overflow-hidden shadow-2xl flex items-center justify-between cursor-pointer transition-all ${visaoAtual === 'BAIXO_GIRO' ? 'border-amber-500 shadow-[0_0_20px_rgba(245,158,11,0.2)] ring-1 ring-amber-500/50' : 'border-[#1E293B] hover:border-slate-600'}`} onClick={() => setVisaoAtual('BAIXO_GIRO')}>
              <div className="absolute left-0 top-0 bottom-0 w-2 bg-amber-500 shadow-[0_0_20px_rgba(245,158,11,1)]"></div>
              <div>
                <p className="text-xs font-black text-amber-500 uppercase tracking-widest mb-2 flex items-center gap-2"><TrendingDown size={16}/> Alerta de Baixo Giro (Superestocados)</p>
@@ -164,7 +164,7 @@ export default function AnaliseEstoque() {
         </div>
 
         {/* TABELA DE DETALHAMENTO */}
-        <div className="bg-[#111A2C] border border-[#1E293B] rounded-2xl shadow-xl flex flex-col flex-1 min-h-[400px]">
+        <div className="bg-[#111A2C] border border-[#1E293B] rounded-2xl shadow-xl flex flex-col flex-1 min-h-100">
            <div className="p-5 border-b border-slate-800 bg-[#0E1525] flex justify-between items-center shrink-0 rounded-t-2xl">
              <h3 className="text-sm font-black text-white uppercase tracking-widest flex items-center gap-2">
                {visaoAtual === 'PARADO' ? <><AlertTriangle size={18} className="text-rose-500"/> Detalhamento do Estoque Parado</> : <><AlertTriangle size={18} className="text-amber-500"/> Detalhamento de Baixo Giro</>}

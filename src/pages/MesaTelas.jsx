@@ -73,7 +73,6 @@ export default function MesaTelas() {
   const [novaLoja, setNovaLoja] = useState('');
   const [menuLojaAberto, setMenuLojaAberto] = useState(false);
 
-  // Efeitos para salvar no LocalStorage
   useEffect(() => { localStorage.setItem('visibilidade_colunas_telas_v4', JSON.stringify(visibilidadeColunas)); }, [visibilidadeColunas]);
   useEffect(() => { localStorage.setItem('fornecedoresGlobais_telas_v4', JSON.stringify(fornecedoresGlobais)); }, [fornecedoresGlobais]);
   useEffect(() => { localStorage.setItem('colunas_cod_visiveis_telas_v4', JSON.stringify(colunasCodVisiveis)); }, [colunasCodVisiveis]);
@@ -133,7 +132,6 @@ export default function MesaTelas() {
     } catch (e) { setSaldoCreditoDisponivel(0); }
   };
 
-  // 🔥 O PURIFICADOR: Corrige erros de digitação das planilhas
   const normalizarForn = (f) => {
     const up = String(f).toUpperCase().trim();
     if (up === 'DIAMONS' || up === 'DIAMO') return 'DIAMONDS';
@@ -149,18 +147,29 @@ export default function MesaTelas() {
       if (filtroMarca && filtroMarca !== 'TODAS') url += `&marca=${encodeURIComponent(filtroMarca)}`;
       if (busca && busca.trim() !== '') url += `&busca=${encodeURIComponent(busca.trim())}`;
 
-      const res = await api.get(url);
-      const baseItems = res.data.content || [];
-      const infoPagina = res.data.page || res.data || {};
-      
-      const resEstq = await api.get(`/estoque?size=10000&_t=${t}`);
-      const estoqueGlobal = resEstq.data.content || resEstq.data || [];
+      // 🔥 O SEGREDO DA VELOCIDADE: Promise.all dispara todas as buscas simultaneamente em Lote!
+      const [resMesa, resEstq, resPedidos, resVendasBulk] = await Promise.all([
+        api.get(url),
+        api.get(`/estoque?size=10000&_t=${t}`),
+        api.get(`/pedidos?size=5000&_t=${t}`).catch(() => ({ data: [] })),
+        api.get(`/vendas?size=10000&_t=${t}`).catch(() => ({ data: null }))
+      ]);
 
-      let todosPedidos = [];
-      try {
-        const resPedidos = await api.get(`/pedidos?size=5000&_t=${t}`);
-        todosPedidos = resPedidos.data?.content || (Array.isArray(resPedidos.data) ? resPedidos.data : []);
-      } catch (e) {}
+      const baseItems = resMesa.data.content || resMesa.data || [];
+      const infoPagina = resMesa.data.page || resMesa.data || {};
+      const estoqueGlobal = resEstq.data.content || resEstq.data || [];
+      const todosPedidos = resPedidos.data?.content || (Array.isArray(resPedidos.data) ? resPedidos.data : []);
+
+      // Prepara o mapa de vendas em memória (Instantâneo)
+      const mapaVendasGlobal = {};
+      let usaFallbackVendas = false;
+      const vendasData = resVendasBulk.data?.content || (Array.isArray(resVendasBulk.data) ? resVendasBulk.data : null);
+
+      if (vendasData && vendasData.length > 0) {
+          vendasData.forEach(v => { if (v.sku) mapaVendasGlobal[v.sku] = v; });
+      } else {
+          usaFallbackVendas = true; // Fallback caso a rota em lote não exista no backend
+      }
 
       const discovered = new Set(fornecedoresGlobais);
       let newFound = false;
@@ -178,7 +187,6 @@ export default function MesaTelas() {
         let estoqueGeralNosso = { fisico: 0, aCaminho: 0 }; 
         let estoqueFornecedores = {}; 
 
-        // Purifica os Códigos
         const normCodigos = {};
         Object.entries(item.codigosFornecedores || {}).forEach(([k, v]) => {
             const nk = normalizarForn(k);
@@ -187,7 +195,6 @@ export default function MesaTelas() {
         });
         item.codigosFornecedores = normCodigos;
 
-        // Purifica os Custos
         const normCustos = {};
         Object.entries(item.custosFornecedores || {}).forEach(([k, v]) => {
             const nk = normalizarForn(k);
@@ -196,7 +203,6 @@ export default function MesaTelas() {
         });
         item.custosFornecedores = normCustos;
 
-        // Purifica o Estoque
         const normEstq = {};
         Object.entries(item.estoqueFornecedores || {}).forEach(([k, v]) => {
             normEstq[normalizarForn(k)] = v;
@@ -253,16 +259,24 @@ export default function MesaTelas() {
         });
         estoqueGeralNosso.aCaminho = qtdACaminho;
 
+        // 🔥 O CRUZAMENTO INSTANTÂNEO USANDO A MEMÓRIA RAM
         for (const cod of codigosParaConsultar) {
-          try {
-             const resVendas = await api.get(`/vendas/${encodeURIComponent(cod)}?_t=${t}`);
-             if (resVendas.data) {
-               vendas.vendaMensal += Number(resVendas.data.vendaMensal || resVendas.data.vendaMês || 0);
-               vendas.vendaSemanal += Number(resVendas.data.vendaSemanal || resVendas.data.vendaSem || 0);
-             }
-          } catch(e) {}
+          if (!usaFallbackVendas && mapaVendasGlobal[cod]) {
+              const v = mapaVendasGlobal[cod];
+              vendas.vendaMensal += Number(v.vendaMensal || v.vendaMês || 0);
+              vendas.vendaSemanal += Number(v.vendaSemanal || v.vendaSem || 0);
+          } else if (usaFallbackVendas) {
+              try {
+                  const resVendas = await api.get(`/vendas/${encodeURIComponent(cod)}?_t=${t}`);
+                  if (resVendas.data) {
+                    vendas.vendaMensal += Number(resVendas.data.vendaMensal || resVendas.data.vendaMês || 0);
+                    vendas.vendaSemanal += Number(resVendas.data.vendaSemanal || resVendas.data.vendaSem || 0);
+                  }
+              } catch(e) {}
+          }
         }
         vendas.mediaSemanal = Math.round(vendas.vendaSemanal > 0 ? vendas.vendaSemanal / 4 : 0);
+        
         return { ...item, vendas, estoqueGeralNosso, estoqueFornecedores, qtdComprar: '' };
       }));
       
@@ -270,9 +284,9 @@ export default function MesaTelas() {
       setTotalPaginas(infoPagina.totalPages || 0);
       setTotalRegistros(infoPagina.totalElements || 0);
 
-      // Adiciona novos fornecedores limpos à lista
       if (newFound) setFornecedoresGlobais(Array.from(discovered));
     } catch(err) {
+      console.error("Erro ao carregar mesa: ", err);
     } finally {
       setLoading(false);
     }
@@ -285,7 +299,6 @@ export default function MesaTelas() {
     } catch (e) {}
   };
 
-  // 🔥 ORDENAÇÃO DE FORNECEDORES
   const moverFornecedor = (index, direcao) => {
     if ((direcao === -1 && index === 0) || (direcao === 1 && index === fornecedoresGlobais.length - 1)) return;
     const novaLista = [...fornecedoresGlobais];
